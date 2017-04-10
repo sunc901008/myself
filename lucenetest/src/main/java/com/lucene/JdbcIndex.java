@@ -48,7 +48,7 @@ public class JdbcIndex {
         StringField tableField = new StringField("table", table, Field.Store.YES);
         StringField columnField = new StringField("column", column, Field.Store.YES);
         StringField longPoint = new StringField("count", "1", Field.Store.YES);
-        TextField textField = new TextField("contents", "", Field.Store.YES);
+        StringField textField = new StringField("contents", "", Field.Store.YES);
 
         for (int i = 0; i < list.size(); i++) {
             String str = list.getString(i);

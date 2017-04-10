@@ -16,14 +16,15 @@ import java.util.*;
  */
 public class Main {
 
-    private static final String indexPath = "f:/test/index";
+    private static final String indexPath = "f:/test/test";
 
     public static void main(String[] args) throws Exception {
 //        build();
 //        buildIndex();
-//        search("java");
-        search("Wilso");
+        search("you");
+//        search("teacher");
 //        updateIndex("java");
+//        priority();
 //        梁宇腾
 //        wordsIndex();
     }
@@ -38,7 +39,7 @@ public class Main {
 
         Set<String> set = new HashSet<>();
         Date start = new Date();
-        BufferedReader reader = new BufferedReader(new FileReader("f:/displayname.csv"));
+        BufferedReader reader = new BufferedReader(new FileReader("f:/test.csv"));
         String line;
         while ((line = reader.readLine()) != null) {
             set.add(line);
@@ -62,26 +63,32 @@ public class Main {
 //        Community
         Index index = new Index();
 //        index.updateIndex(query,indexPath,"tags","tagname");
-        JsonArray ja = index.searchIndex(query, indexPath);
+        List<JsonObject> list = index.searchIndex(query, indexPath);
 
-//        for (Object j : ja) {
-//            JsonObject json = (JsonObject) j;
-//            System.out.println("-----------------");
-////            System.out.println("doc: " + json.getValue("doc"));
-////            System.out.println("table: " + json.getValue("table"));
-////            System.out.println("column: " + json.getValue("column"));
-////            System.out.println("count: " + json.getValue("count"));
-//            System.out.println("contents: " + json.getValue("contents"));
-//            System.out.println("score:" + json.getValue("score"));
-//        }
+        for (JsonObject json : list) {
+            System.out.println("-----------------");
+            System.out.println("doc: " + json.getValue("doc"));
+//            System.out.println("table: " + json.getValue("table"));
+//            System.out.println("column: " + json.getValue("column"));
+//            System.out.println("count: " + json.getValue("count"));
+            System.out.println("contents: " + json.getValue("contents"));
+            System.out.println("score:" + json.getValue("score"));
+        }
 
     }
 
 
-    public static void updateIndex(String query) throws Exception {
+    public static void priority() throws Exception {
+        PriorityQueue <Integer> p = new PriorityQueue<>();
+        p.add(12);
+        p.add(2);
+        p.add(5);
+        p.add(6);
 
-        Index index = new Index();
-        index.updateIndex(query, indexPath, "tags", "tagname");
+        for (int i = 3; i > 0; i--) {
+        }
+
+        p.forEach(System.out::println);
     }
 
     public static void wordsIndex() throws Exception {
