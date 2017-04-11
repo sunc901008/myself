@@ -15,7 +15,7 @@ public class MyHitQueue extends MyPriorityQueue<ScoreDoc> {
 
     @Override
     protected ScoreDoc getSentinelObject() {
-        return new ScoreDoc(Integer.MIN_VALUE, -1);
+        return new ScoreDoc(-1, Float.NEGATIVE_INFINITY);
     }
 
     @Override
@@ -28,9 +28,6 @@ public class MyHitQueue extends MyPriorityQueue<ScoreDoc> {
 
     @Override
     protected boolean moreThan(ScoreDoc hitA, ScoreDoc hitB) {
-        if (hitA.score == hitB.score)
-            return hitA.doc < hitB.doc;
-        else
-            return hitA.score > hitB.score;
+        return hitA.score > hitB.score;
     }
 }

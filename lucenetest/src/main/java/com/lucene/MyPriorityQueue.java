@@ -49,37 +49,35 @@ public abstract class MyPriorityQueue<T> implements Iterable<T> {
         return heap[1];
     }
 
+    public final T topBig() {
+        return heap[1];
+    }
+
     public final T popSmall() {
-        System.out.println("****************small**************");
-        Arrays.asList(heap).forEach(System.out::println);
         T result = heap[1];       // save first value
         heap[1] = heap[size];     // move last to first
         heap[size] = null;        // permit GC of objects
         size--;
         downHeap(1);              // adjust heap
-        System.out.println("******************************");
-        Arrays.asList(heap).forEach(System.out::println);
-        System.out.println("****************small**************");
         return result;
     }
 
-
     public final T popBig() {
-        System.out.println("****************big**************");
-        Arrays.asList(heap).forEach(System.out::println);
+        upHeap(1);              // adjust heap
+        T result = heap[1];       // save first value
         heap[1] = heap[size];     // move last to first
         heap[size] = null;        // permit GC of objects
         size--;
-        upHeap(1);              // adjust heap
-        T result = heap[1];       // save first value
-        System.out.println("******************************");
-        Arrays.asList(heap).forEach(System.out::println);
-        System.out.println("****************big**************");
         return result;
     }
 
     public final T updateTop() {
         downHeap(1);
+        return heap[1];
+    }
+
+    public final T updateTopBig() {
+        upHeap(1);
         return heap[1];
     }
 
@@ -89,23 +87,16 @@ public abstract class MyPriorityQueue<T> implements Iterable<T> {
 
 
     private final void upHeap(int i) {
-
-        T node = heap[i];          // save top node
-        int j = i << 1;            // find bigger child
-        int k = j + 1;
-        if (k <= size && moreThan(heap[k], heap[j])) {
-            j = k;
-        }
-        while (j <= size && moreThan(heap[j], node)) {
-            heap[i] = heap[j];       // shift up child
-            i = j;
-            j = i << 1;
-            k = j + 1;
-            if (k <= size && moreThan(heap[k], heap[j])) {
-                j = k;
+        T t;
+        int j = i + 1;
+        while (j <= size) {
+            if (!moreThan(heap[i], heap[j])) {
+                t = heap[j];
+                heap[j] = heap[i];
+                heap[i] = t;
             }
+            j++;
         }
-        heap[i] = node;            // install saved node
     }
 
     private final void downHeap(int i) {

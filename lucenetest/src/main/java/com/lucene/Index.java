@@ -1,19 +1,14 @@
 package com.lucene;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.CustomScoreProvider;
 import org.apache.lucene.queries.CustomScoreQuery;
 import org.apache.lucene.search.*;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.MMapDirectory;
 
 import java.io.IOException;
@@ -32,7 +27,7 @@ public class Index {
 
     public List<JsonObject> searchIndex(String queries, String indexPath) throws Exception {
         Date start = new Date();
-        int hitsPerPage = 20;
+        int hitsPerPage = 5;
 
 //        IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
         IndexReader reader = DirectoryReader.open(new MMapDirectory(Paths.get(indexPath)));
@@ -72,46 +67,6 @@ public class Index {
         System.out.println(end.getTime() - start.getTime() + " total milliseconds");
         reader.close();
         return list;
-    }
-
-
-    class MyCustomScoreQuery extends CustomScoreQuery {
-        private IndexSearcher searcher;
-        private String queries;
-
-        public MyCustomScoreQuery(Query subQuery, String queries, IndexSearcher searcher) {
-            super(subQuery);
-            this.searcher = searcher;
-            this.queries = queries;
-        }
-
-        @Override
-        protected CustomScoreProvider getCustomScoreProvider(LeafReaderContext context) throws IOException {
-            return new MyCustomScoreProvider(context, queries, searcher);
-        }
-
-    }
-
-    class MyCustomScoreProvider extends CustomScoreProvider {
-        private IndexSearcher searcher;
-        private String queries;
-
-        public MyCustomScoreProvider(LeafReaderContext context, String queries, IndexSearcher searcher) {
-            super(context);
-            this.searcher = searcher;
-            this.queries = queries;
-        }
-
-        @Override
-        public float customScore(int doc, float subQueryScore, float valSrcScore) throws IOException {
-            Document document = searcher.doc(doc);
-            String contents = document.get("contents").toLowerCase();
-            long count = Long.parseLong(document.get("count"));
-            float score = subQueryScore * valSrcScore / contents.length();
-            if (contents.startsWith(queries))
-                score *= 10;
-            return score;
-        }
     }
 
 //    public void updateIndex(String queries, String indexPath, String table, String column) throws Exception {

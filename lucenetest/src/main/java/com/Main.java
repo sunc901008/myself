@@ -16,36 +16,25 @@ import java.util.*;
  */
 public class Main {
 
-    private static final String indexPath = "f:/test/test";
+    private static final String indexPath = "f:/test/index";
 
     public static void main(String[] args) throws Exception {
 //        build();
-//        buildIndex();
-        search("you");
-//        search("teacher");
-//        updateIndex("java");
-//        priority();
-//        梁宇腾
-//        wordsIndex();
+        search("teacher");
     }
 
 
     public static void build() throws Exception {
 
-//        Date start = new Date();
-//        JsonArray list = JdbcController.query("select distinct DisplayName from users");
-//        Date end = new Date();
-//        System.out.println("get datas from mysql : " + (end.getTime() - start.getTime()) + " total milliseconds");
-
-        Set<String> set = new HashSet<>();
+        List<String> set = new ArrayList<>();
         Date start = new Date();
-        BufferedReader reader = new BufferedReader(new FileReader("f:/test.csv"));
+        BufferedReader reader = new BufferedReader(new FileReader("f:/display.csv"));
         String line;
         while ((line = reader.readLine()) != null) {
             set.add(line);
         }
         reader.close();
-        JsonArray list = new JsonArray(new ArrayList<>(set));
+        JsonArray list = new JsonArray(set);
         Date end = new Date();
         System.out.println("get datas from file : " + (end.getTime() - start.getTime()) + " total milliseconds");
 
@@ -75,28 +64,6 @@ public class Main {
             System.out.println("score:" + json.getValue("score"));
         }
 
-    }
-
-
-    public static void priority() throws Exception {
-        PriorityQueue <Integer> p = new PriorityQueue<>();
-        p.add(12);
-        p.add(2);
-        p.add(5);
-        p.add(6);
-
-        for (int i = 3; i > 0; i--) {
-        }
-
-        p.forEach(System.out::println);
-    }
-
-    public static void wordsIndex() throws Exception {
-        List<String> list = JdbcIndex.getWords("f:/displayname.csv");
-        System.out.println(list.size());
-        for (int i = 0; i < 50; i++) {
-            System.out.println(list.get(i));
-        }
     }
 
 }

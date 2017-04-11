@@ -78,7 +78,7 @@ public abstract class MyTopScoreDocCollector extends MyTopDocsCollector<ScoreDoc
 
     MyTopScoreDocCollector(int numHits) {
         super(new MyHitQueue(numHits, true));
-        pqTop = pq.top();
+        pqTop = pq.topBig();
     }
 
     @Override

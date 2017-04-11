@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 class MyIndexSearcher extends IndexSearcher {
 
@@ -47,27 +46,20 @@ class MyIndexSearcher extends IndexSearcher {
     protected final List<LeafReaderContext> leafContexts;
     protected final LeafSlice[] leafSlices;
 
-    private final ExecutorService executor;
-
     private QueryCache queryCache = DEFAULT_QUERY_CACHE;
     private QueryCachingPolicy queryCachingPolicy = DEFAULT_CACHING_POLICY;
 
     public MyIndexSearcher(IndexReader r) {
-        this(r, null);
+        this(r.getContext());
     }
 
-    public MyIndexSearcher(IndexReader r, ExecutorService executor) {
-        this(r.getContext(), executor);
-    }
-
-    public MyIndexSearcher(IndexReaderContext context, ExecutorService executor) {
-        super(context, executor);
+    public MyIndexSearcher(IndexReaderContext context) {
+        super(context, null);
         assert context.isTopLevel : "IndexSearcher's ReaderContext must be topLevel for reader" + context.reader();
         reader = context.reader();
-        this.executor = executor;
         this.readerContext = context;
         leafContexts = context.leaves();
-        this.leafSlices = executor == null ? null : slices(leafContexts);
+        this.leafSlices = null;
     }
 
     protected LeafSlice[] slices(List<LeafReaderContext> leaves) {
@@ -96,7 +88,8 @@ class MyIndexSearcher extends IndexSearcher {
 
             @Override
             public MyTopScoreDocCollector newCollector() throws IOException {
-                return MyTopScoreDocCollector.create(cappedNumHits);
+                MyTopScoreDocCollector collector = MyTopScoreDocCollector.create(cappedNumHits);
+                return collector;
             }
 
             @Override
@@ -107,7 +100,7 @@ class MyIndexSearcher extends IndexSearcher {
                 int i = 0;
                 Date start = new Date();
                 for (MyTopScoreDocCollector collector : collectors) {
-                    topDocs[i++] = collector.topDocs();
+                    topDocs[i++] = collector.topDocs1();
                 }
                 Date end = new Date();
                 System.out.println("in reduce : " + (end.getTime() - start.getTime()));
@@ -153,20 +146,32 @@ class MyIndexSearcher extends IndexSearcher {
         System.out.println("-----------------------in search 3----------------------");
 
         Date start = new Date();
+        int i = 0;
         for (LeafReaderContext ctx : leaves) {
+            i++;
+            System.out.println("-----------------------in search 3 for " + i + "----------------------");
+            Date start1 = new Date();
             final LeafCollector leafCollector;
             try {
                 leafCollector = collector.getLeafCollector(ctx);
             } catch (CollectionTerminatedException e) {
                 continue;
             }
+            Date end1 = new Date();
+            System.out.println("collector.getLeafCollector: " + (end1.getTime() - start1.getTime()));
+
             BulkScorer scorer = weight.bulkScorer(ctx);
+            Date end2 = new Date();
+            System.out.println("weight.bulkScorer: " + (end2.getTime() - end1.getTime()));
             if (scorer != null) {
                 try {
                     scorer.score(leafCollector, ctx.reader().getLiveDocs());
                 } catch (CollectionTerminatedException e) {
                 }
             }
+
+            Date end3 = new Date();
+            System.out.println("scorer.score: " + (end3.getTime() - end2.getTime()));
         }
         Date end = new Date();
         System.out.println("in search 3: " + (end.getTime() - start.getTime()));
@@ -190,14 +195,10 @@ class MyIndexSearcher extends IndexSearcher {
         return weight;
     }
 
-    /**
-     * Creates a {@link Weight} for the given query, potentially adding caching
-     * if possible and configured.
-     */
     public Weight createWeight(Query query, boolean needsScores) throws IOException {
         final QueryCache queryCache = this.queryCache;
         Weight weight = query.createWeight(this, needsScores);
-        if (needsScores == false && queryCache != null) {
+        if (!needsScores && queryCache != null) {
             weight = queryCache.doCache(weight, queryCachingPolicy);
         }
         return weight;
