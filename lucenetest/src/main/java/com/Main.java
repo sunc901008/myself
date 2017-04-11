@@ -16,7 +16,8 @@ import java.util.*;
  */
 public class Main {
 
-    private static final String indexPath = "f:/test/index";
+    private static final String indexPath = "g:/lucene/display-index";
+    private static final String dataPath = "g:/lucene/display-data/display.csv";
 
     public static void main(String[] args) throws Exception {
 //        build();
@@ -28,7 +29,7 @@ public class Main {
 
         List<String> set = new ArrayList<>();
         Date start = new Date();
-        BufferedReader reader = new BufferedReader(new FileReader("f:/display.csv"));
+        BufferedReader reader = new BufferedReader(new FileReader(dataPath));
         String line;
         while ((line = reader.readLine()) != null) {
             set.add(line);
@@ -41,8 +42,8 @@ public class Main {
         System.out.println("list size :" + list.size());
 
         JsonObject json = new JsonObject();
-        json.put("table", "tags");
-        json.put("column", "tagname");
+        json.put("table", "users");
+        json.put("column", "DisplayName");
         json.put("content", list);
 
         JdbcIndex.buildIndex(json, indexPath);
