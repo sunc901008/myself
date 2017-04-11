@@ -30,7 +30,6 @@ class MyCustomScoreProvider extends CustomScoreProvider {
         float score = 1.0f / contents.length();
         if (contents.startsWith(queries))
             score *= 10;
-//            System.out.println("doc: " + doc + " | contents: " + contents + " | queries:" + queries + " | score: " + score);
         return score;
     }
 }

@@ -1,14 +1,16 @@
 package com.lucene;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.CustomScoreProvider;
-import org.apache.lucene.queries.CustomScoreQuery;
-import org.apache.lucene.search.*;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.PrefixQuery;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.MMapDirectory;
 
 import java.io.IOException;
@@ -25,29 +27,38 @@ import java.util.List;
 
 public class Index {
 
-    public List<JsonObject> searchIndex(String queries, String indexPath) throws Exception {
+    private static final String indexPath = "g:/lucene/display-index";
+    private static IndexReader reader;
+    private static MyIndexSearcher searcher;
+    static {
+        try {
+            reader = DirectoryReader.open(new MMapDirectory(Paths.get(indexPath)));
+            searcher = new MyIndexSearcher(reader);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static JsonObject searchIndex(String queries, int hitsPerPage) throws Exception {
         Date start = new Date();
-        int hitsPerPage = 5;
 
 //        IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-        IndexReader reader = DirectoryReader.open(new MMapDirectory(Paths.get(indexPath)));
+//        IndexReader reader = DirectoryReader.open(new MMapDirectory(Paths.get(indexPath)));
 //        IndexReader reader = DirectoryReader.open(new RAMDirectory(new SimpleFSDirectory(Paths.get(indexPath)), new IOContext()));
-        MyIndexSearcher searcher = new MyIndexSearcher(reader);
+//        MyIndexSearcher searcher = new MyIndexSearcher(reader);
         Term term = new Term("contents", queries.toLowerCase());
         PrefixQuery query = new PrefixQuery(term);
 
         MyCustomScoreQuery myCustomScoreQuery = new MyCustomScoreQuery(query, queries, searcher);
 
-        Date end1 = new Date();
-        System.out.println("read index to ram : " + (end1.getTime() - start.getTime()));
-
         TopDocs results = searcher.search(myCustomScoreQuery, hitsPerPage);
+        Date end = new Date();
 
-        Date end2 = new Date();
-        System.out.println("search : " + (end2.getTime() - end1.getTime()));
+        long time = end.getTime() - start.getTime();
 
         ScoreDoc[] hits = results.scoreDocs;
 
+        JsonObject jsonObject = new JsonObject().put("time", time);
         List<JsonObject> list = new ArrayList<>();
         for (ScoreDoc sd : hits) {
             JsonObject json = new JsonObject();
@@ -60,13 +71,50 @@ public class Index {
             json.put("score", sd.score);
             list.add(json);
         }
+        jsonObject.put("result",list);
+//        System.out.println(results.totalHits + " total matching documents");
+//        System.out.println(end.getTime() - start.getTime() + " total milliseconds");
+        return jsonObject;
+    }
 
+    public static void buildIndex(JsonObject json) throws Exception {
+        JsonArray list = json.getJsonArray("content");
+        String table = json.getString("table");
+        String column = json.getString("column");
+        Date start = new Date();
+//        Directory dir = FSDirectory.open(Paths.get(indexPath));
+        MMapDirectory dir = new MMapDirectory(Paths.get(indexPath));
+//        RAMDirectory dir = new RAMDirectory(new SimpleFSDirectory(Paths.get(indexPath)), new IOContext());
+        Analyzer analyzer = new StandardAnalyzer();
+
+        IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        IndexWriter writer = new IndexWriter(dir, iwc);
+
+        StringField tableField = new StringField("table", table, Field.Store.YES);
+        StringField columnField = new StringField("column", column, Field.Store.YES);
+        StringField longPoint = new StringField("count", "1", Field.Store.YES);
+        StringField textField = new StringField("contents", "", Field.Store.YES);
+
+        for (int i = 0; i < list.size(); i++) {
+            String str = list.getString(i);
+            int index = i + 1;
+            if (index % 10000 == 0) {
+                System.out.println("build index : " + index);
+            }
+            Document doc = new Document();
+
+            doc.add(tableField);
+            doc.add(columnField);
+            doc.add(longPoint);
+            textField.setStringValue(str);
+            doc.add(textField);
+            writer.addDocument(doc);
+        }
+
+        writer.close();
         Date end = new Date();
-        System.out.println("make structure : " + (end.getTime() - end2.getTime()));
-        System.out.println(results.totalHits + " total matching documents");
         System.out.println(end.getTime() - start.getTime() + " total milliseconds");
-        reader.close();
-        return list;
     }
 
 //    public void updateIndex(String queries, String indexPath, String table, String column) throws Exception {

@@ -1,13 +1,14 @@
 package com;
 
 import com.lucene.Index;
-import com.lucene.JdbcIndex;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * creator: sunc
@@ -16,17 +17,10 @@ import java.util.*;
  */
 public class Main {
 
-    private static final String indexPath = "g:/lucene/display-index";
     private static final String dataPath = "g:/lucene/display-data/display.csv";
-
-    public static void main(String[] args) throws Exception {
-//        build();
-        search("teacher");
-    }
 
 
     public static void build() throws Exception {
-
         List<String> set = new ArrayList<>();
         Date start = new Date();
         BufferedReader reader = new BufferedReader(new FileReader(dataPath));
@@ -37,7 +31,7 @@ public class Main {
         reader.close();
         JsonArray list = new JsonArray(set);
         Date end = new Date();
-        System.out.println("get datas from file : " + (end.getTime() - start.getTime()) + " total milliseconds");
+        System.out.println("get data from file : " + (end.getTime() - start.getTime()) + " total milliseconds");
 
         System.out.println("list size :" + list.size());
 
@@ -46,21 +40,19 @@ public class Main {
         json.put("column", "DisplayName");
         json.put("content", list);
 
-        JdbcIndex.buildIndex(json, indexPath);
+        Index.buildIndex(json);
     }
 
-    public static void search(String query) throws Exception {
-//        Community
-        Index index = new Index();
-//        index.updateIndex(query,indexPath,"tags","tagname");
-        List<JsonObject> list = index.searchIndex(query, indexPath);
-
+    public static void search(String query, int limit) throws Exception {
+        JsonObject jsonObject = Index.searchIndex(query, limit);
+        List<JsonObject> list = (List<JsonObject>) jsonObject.getValue("result");
+        System.out.println("time-consuming: " + jsonObject.getLong("time"));
         for (JsonObject json : list) {
             System.out.println("-----------------");
             System.out.println("doc: " + json.getValue("doc"));
-//            System.out.println("table: " + json.getValue("table"));
-//            System.out.println("column: " + json.getValue("column"));
-//            System.out.println("count: " + json.getValue("count"));
+            System.out.println("table: " + json.getValue("table"));
+            System.out.println("column: " + json.getValue("column"));
+            System.out.println("count: " + json.getValue("count"));
             System.out.println("contents: " + json.getValue("contents"));
             System.out.println("score:" + json.getValue("score"));
         }

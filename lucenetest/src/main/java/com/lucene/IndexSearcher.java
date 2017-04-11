@@ -77,8 +77,6 @@ class MyIndexSearcher extends IndexSearcher {
 
     public MyTopDocs searchAfter(Query query, int numHits) throws IOException {
 
-        System.out.println("-----------------------in search 1----------------------");
-
         final int limit = Math.max(1, reader.maxDoc());
         numHits = Math.min(numHits, limit);
 
@@ -94,26 +92,16 @@ class MyIndexSearcher extends IndexSearcher {
 
             @Override
             public MyTopDocs reduce(Collection<MyTopScoreDocCollector> collectors) throws IOException {
-
-                System.out.println("-----------------------in reduce ----------------------");
                 final MyTopDocs[] topDocs = new MyTopDocs[collectors.size()];
                 int i = 0;
-                Date start = new Date();
                 for (MyTopScoreDocCollector collector : collectors) {
                     topDocs[i++] = collector.topDocs1();
                 }
-                Date end = new Date();
-                System.out.println("in reduce : " + (end.getTime() - start.getTime()));
-
                 MyTopDocs top = MyTopDocs.merge1(0, cappedNumHits, topDocs, true);
-
-                System.out.println("-----------------------out reduce ----------------------");
                 return top;
             }
         };
-
         MyTopDocs result = search(query, manager);
-        System.out.println("-----------------------out search 1----------------------");
         return result;
     }
 
@@ -126,43 +114,22 @@ class MyIndexSearcher extends IndexSearcher {
     }
 
     public <C extends Collector, T> T search(Query query, CollectorManager<C, T> collectorManager) throws IOException {
-
-        System.out.println("-----------------------in search 2----------------------");
-
         final C collector = collectorManager.newCollector();
-
         search(query, collector);
-
         List<C> co = Collections.singletonList(collector);
         T coll = collectorManager.reduce(co);
-
-        System.out.println("-----------------------in search 2----------------------");
         return coll;
-
     }
 
     protected void search(List<LeafReaderContext> leaves, Weight weight, Collector collector) throws IOException {
-
-        System.out.println("-----------------------in search 3----------------------");
-
-        Date start = new Date();
-        int i = 0;
         for (LeafReaderContext ctx : leaves) {
-            i++;
-            System.out.println("-----------------------in search 3 for " + i + "----------------------");
-            Date start1 = new Date();
             final LeafCollector leafCollector;
             try {
                 leafCollector = collector.getLeafCollector(ctx);
             } catch (CollectionTerminatedException e) {
                 continue;
             }
-            Date end1 = new Date();
-            System.out.println("collector.getLeafCollector: " + (end1.getTime() - start1.getTime()));
-
             BulkScorer scorer = weight.bulkScorer(ctx);
-            Date end2 = new Date();
-            System.out.println("weight.bulkScorer: " + (end2.getTime() - end1.getTime()));
             if (scorer != null) {
                 try {
                     scorer.score(leafCollector, ctx.reader().getLiveDocs());
@@ -170,13 +137,7 @@ class MyIndexSearcher extends IndexSearcher {
                 }
             }
 
-            Date end3 = new Date();
-            System.out.println("scorer.score: " + (end3.getTime() - end2.getTime()));
         }
-        Date end = new Date();
-        System.out.println("in search 3: " + (end.getTime() - start.getTime()));
-
-        System.out.println("-----------------------out search 3----------------------");
     }
 
     public Query rewrite(Query original) throws IOException {

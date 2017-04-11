@@ -25,7 +25,7 @@ dependencies {
     compile "com.alibaba:druid:1.0.7"
 
     compile "io.vertx:vertx-core:3.2.1"
-
+    compile "io.vertx:vertx-web:3.2.1"
 
 }
 
