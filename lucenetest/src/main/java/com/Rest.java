@@ -18,7 +18,7 @@ public class Rest extends AbstractVerticle {
         router.route().handler(BodyHandler.create());
         router.route().handler(CookieHandler.create());
 
-        router.get("/test").handler(new Controller());
+        router.get("/index/search").handler(new SearchController());
 
         vertx.createHttpServer().requestHandler(router::accept).listen(8088, r -> {
             if (r.succeeded())

@@ -88,7 +88,7 @@ public class Index {
         Analyzer analyzer = new StandardAnalyzer();
 
         IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
-        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         IndexWriter writer = new IndexWriter(dir, iwc);
 
         StringField tableField = new StringField("table", table, Field.Store.YES);

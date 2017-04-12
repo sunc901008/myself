@@ -26,10 +26,15 @@ class MyCustomScoreProvider extends CustomScoreProvider {
     public float customScore(int doc, float subQueryScore, float valSrcScore) throws IOException {
         Document document = searcher.doc(doc);
         String contents = document.get("contents").toLowerCase();
+        String table = document.get("table").toLowerCase();
+        System.out.println(table);
         long count = Long.parseLong(document.get("count"));
         float score = 1.0f / contents.length();
         if (contents.startsWith(queries))
             score *= 10;
+        if (!table.equals("users")){
+            return Float.NEGATIVE_INFINITY;
+        }
         return score;
     }
 }

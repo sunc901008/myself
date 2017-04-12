@@ -5,7 +5,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
-public class Controller implements Handler<RoutingContext> {
+class SearchController implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext event) {

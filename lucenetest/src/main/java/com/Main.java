@@ -17,13 +17,17 @@ import java.util.List;
  */
 public class Main {
 
-    private static final String dataPath = "g:/lucene/display-data/display.csv";
+    private static final String dataPath = "g:/lucene/display-data/";
 
+    public static void main(String []args) throws Exception {
+        String fileName = dataPath + "tagname.csv";
+        Main.build(fileName);
+    }
 
-    public static void build() throws Exception {
+    public static void build(String path) throws Exception {
         List<String> set = new ArrayList<>();
         Date start = new Date();
-        BufferedReader reader = new BufferedReader(new FileReader(dataPath));
+        BufferedReader reader = new BufferedReader(new FileReader(path));
         String line;
         while ((line = reader.readLine()) != null) {
             set.add(line);
@@ -36,8 +40,8 @@ public class Main {
         System.out.println("list size :" + list.size());
 
         JsonObject json = new JsonObject();
-        json.put("table", "users");
-        json.put("column", "DisplayName");
+        json.put("table", "tags");
+        json.put("column", "tagName");
         json.put("content", list);
 
         Index.buildIndex(json);
