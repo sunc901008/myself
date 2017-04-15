@@ -221,7 +221,8 @@ public class IndexTrie {
             return new ArrayList<>();
         }
         word = word.toLowerCase();
-        return preTraversal(getNode(word), word, count);
+        List<ValueInfo> list = preTraversal1(getNode(word), word, count);
+        return list.subList(0, Math.min(count, list.size()));
     }
 
     /**
@@ -230,24 +231,46 @@ public class IndexTrie {
      * @param node    子树根节点
      * @param prefixs 查询到该节点前所遍历过的前缀
      */
-    public List<ValueInfo> preTraversal(TrieNode node, String prefixs, int count) {
+    public List<ValueInfo> preTraversal1(TrieNode node, String prefixs, int count) {
         List<ValueInfo> list = new ArrayList<>();
         if (node.nodeState == 1) {// 当前即为一个单词
-            int min = Math.min(node.valueInfo.size(), count - list.size());
+            int min = Math.min(node.valueInfo.size(), count);
             for (int i = 0; i < min; i++) {
                 list.add(node.valueInfo.get(i));
             }
             if (list.size() >= count)
                 return list;
+            count = count - list.size();
         }
 
         List<TrieNode> children = node.next;
         for (TrieNode trieNode : children) {
             // //递归调用前序遍历
             String tempStr = prefixs + trieNode.nodeName;
-            list.addAll(preTraversal(trieNode, tempStr, count));
+            list.addAll(preTraversal1(trieNode, tempStr, count));
             if (list.size() >= count)
                 return list;
+        }
+        return list;
+    }
+
+    /**
+     * 前序遍历
+     *
+     * @param node    子树根节点
+     * @param prefixs 查询到该节点前所遍历过的前缀
+     */
+    public List<ValueInfo> preTraversal2(TrieNode node, String prefixs) {
+        List<ValueInfo> list = new ArrayList<>();
+        if (node.nodeState == 1) {// 当前即为一个单词
+            list.addAll(node.valueInfo);
+        }
+
+        List<TrieNode> children = node.next;
+        for (TrieNode trieNode : children) {
+            // //递归调用前序遍历
+            String tempStr = prefixs + trieNode.nodeName;
+            list.addAll(preTraversal2(trieNode, tempStr));
         }
         return list;
     }

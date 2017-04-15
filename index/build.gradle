@@ -12,6 +12,8 @@ if (project.hasProperty("mainClass")) {
     mainClassName = mainClass
 }
 
+def distributionTar = distTar.archiveName
+
 processResources {
     exclude { "src/main/resources/*" }
 }
@@ -50,20 +52,22 @@ dependencies {
     compile "io.vertx:vertx-web:3.2.1"
 
     // https://mvnrepository.com/artifact/org.apache.hive/hive-jdbc
-    compile group: 'org.apache.hive', name: 'hive-jdbc', version: '2.1.1'
+//    compile group: 'org.apache.hive', name: 'hive-jdbc', version: '2.1.1'
 
 }
 
 def REMOTE_TARGET = '/srv/focus/index'    //服务器项目存储目录
 
 ext.sshHost = "192.168.0.91"
-ext.sshUser = "wangwa"
-ext.sshSudoPassword = "test@wangwa"
+ext.sshUser = "root"
+ext.sshSudoPassword = "wangwa@2015"
+ext.sshKey = "F:\\openscanner\\git\\id_rsa"
 
 remotes {
     webServer {
         host = sshHost
         user = sshUser
+        identity = file(sshKey)
     }
 }
 
@@ -83,8 +87,8 @@ task setup(dependsOn: distTar) {
                 println("tar --overwrite --strip-components=1 -x -f $REMOTE_TARGET/packages/" + distributionTar + " -C $REMOTE_TARGET/project success")
                 execute "rm -f /srv/supervisord.d/index_supervisor.conf"
                 println("rm -f /srv/supervisord.d/index_supervisor.conf success")
-                execute "ln -s /srv/uc/project/etc/index_supervisor.conf /srv/supervisord.d/index_supervisor.conf"
-                println("ln -s /srv/uc/project/etc/index_supervisor.conf /srv/supervisord.d/index_supervisor.conf success")
+                execute "ln -s /srv/focus/index/project/index_supervisor.conf /srv/supervisord.d/index_supervisor.conf"
+                println("ln -s /srv/focus/index/project/index_supervisor.conf /srv/supervisord.d/index_supervisor.conf success")
             }
         }
     }
@@ -104,4 +108,8 @@ task deploy(dependsOn: setup) {
             }
         }
     }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
 }

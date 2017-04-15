@@ -20,6 +20,7 @@ public class Rest extends AbstractVerticle {
         router.route().handler(BodyHandler.create());
         router.route().handler(CookieHandler.create());
 
+        //  /index/search/v2?prefix=abc&limit=5&ignore-case=true
         router.get("/index/search/v2").handler(new SearchController());
         router.get("/index/build").handler(new BuildController());
 

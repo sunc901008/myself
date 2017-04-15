@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.List;
 
 public class IndexTrieMain {
-    private static final String dataPath = "g:/lucene/display-data/";
+    private static final String dataPath = "/srv/focus/index-data/";
 
     private static IndexTrie trie;
 
@@ -25,8 +25,16 @@ public class IndexTrieMain {
     }
 
     public static long buildTrie() {
+        JsonObject json = new JsonObject().put("table", "users").put("column", "displayname").put("path", "display.csv");
+        return buildTrie(json);
+    }
+
+    public static long buildTrie(JsonObject json) {
         List<ValueInfo> list = new ArrayList<>();
-        String path = dataPath + "display.csv";
+        String path = dataPath + json.getString("path");
+        String table = json.getString("table");
+        String column = json.getString("column");
+        String type = json.getString("type", "columnValue");
         try {
             BufferedReader reader = new BufferedReader(new FileReader(path));
             String line;
@@ -36,9 +44,9 @@ public class IndexTrieMain {
                     System.out.println("count : " + count);
                 count++;
                 ValueInfo valueInfo = new ValueInfo();
-                valueInfo.setTable("users");
-                valueInfo.setColumn("displayName");
-                valueInfo.setType("columnValue");
+                valueInfo.setTable(table);
+                valueInfo.setColumn(column);
+                valueInfo.setType(type);
                 valueInfo.setContent(line);
                 list.add(valueInfo);
             }

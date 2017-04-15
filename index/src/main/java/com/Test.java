@@ -14,7 +14,7 @@ import java.util.List;
 public class Test {
 
     public static void main(String[] args) {
-        String[] displayName = new String[]{"teach", "te", "hello", "world"};
+        String[] displayName = new String[]{"hello", "hell"};
         List<ValueInfo> list = new ArrayList<>();
         for (String content : displayName) {
             ValueInfo valueInfo = new ValueInfo();
@@ -25,7 +25,7 @@ public class Test {
             valueInfo.setContent(content);
             list.add(valueInfo);
         }
-        String[] name = new String[]{"sunc", "ni", "hello", "teacher"};
+        String[] name = new String[]{"hell", "hello", "hello2342"};
         for (String content : name) {
             ValueInfo valueInfo = new ValueInfo();
             valueInfo.setTable("users");
@@ -35,7 +35,7 @@ public class Test {
             valueInfo.setContent(content);
             list.add(valueInfo);
         }
-        String[] age = new String[]{"hello", "teasdfscher"};
+        String[] age = new String[]{"hello", "hell111"};
         for (String content : age) {
             ValueInfo valueInfo = new ValueInfo();
             valueInfo.setTable("users");
@@ -47,7 +47,7 @@ public class Test {
         }
         System.out.println(IndexTrieMain.buildTrie(list));
         System.out.println(IndexTrieMain.getAllWords());
-        System.out.println(IndexTrieMain.search("hell", 3));
+        System.out.println(IndexTrieMain.search("hell", 4));
         System.out.println(IndexTrieMain.getAllWords());
 
     }
