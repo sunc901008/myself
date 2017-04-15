@@ -8,20 +8,47 @@ package com.tree;
 
 import io.vertx.core.json.JsonObject;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 public class IndexTrieMain {
-    private static final String dataPath = "/srv/focus/index-data/";
+    private static String config = "conf/direction.properties";
+
+    private static String dataPath = "/srv/focus/index-data/";
+
+    private static String indexBackup = "indexBackup";
 
     private static IndexTrie trie;
 
     static {
         trie = new IndexTrie();
+
+        InputStream inputStream = null;
+        try {
+            Properties p = new Properties();
+            File file = new File(config);
+            if (!file.exists()) {
+                config = System.getProperty("user.dir") + "/src/main/resources/" + config;
+                file = new File(config);
+            }
+            inputStream = new BufferedInputStream(new FileInputStream(file));
+            p.load(inputStream);
+            dataPath = p.getProperty("index-data");
+            indexBackup = dataPath + indexBackup;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static long buildTrie() {
@@ -81,6 +108,22 @@ public class IndexTrieMain {
 
     public static List<String> getAllWords() {
         return trie.getAllWords();
+    }
+
+    public static List<TrieNode> getAllNodes() {
+        return trie.getAllNodes();
+    }
+
+    //  index 持久化
+    public static long store(){
+        // TODO: 2017/4/15
+        return 0;
+    }
+
+    //  从磁盘恢复index
+    public static long restore(){
+        // TODO: 2017/4/15
+        return 0;
     }
 
     public static void lock() {

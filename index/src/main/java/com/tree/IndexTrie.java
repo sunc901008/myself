@@ -66,6 +66,7 @@ public class IndexTrie {
                 }
             }
             if (bool) {
+                trieNode.parentId = node.nodeId;
                 children.add(trieNode);
                 // 添加下一个字符
                 addWord(trieNode, word.substring(1), valueInfo);
@@ -188,7 +189,7 @@ public class IndexTrie {
     }
 
     /**
-     * 遍历Trie树
+     * 遍历Trie树,返回所有index
      */
     public List<String> getAllWords() {
         return preTraversal(this.root, "");
@@ -211,6 +212,34 @@ public class IndexTrie {
             // //递归调用前序遍历
             String tempStr = prefixs + trieNode.nodeName;
             list.addAll(preTraversal(trieNode, tempStr));
+        }
+        return list;
+    }
+
+    /**
+     * 遍历Trie树,返回所有节点
+     */
+    public List<TrieNode> getAllNodes() {
+        return getAllNodes(this.root, "");
+    }
+
+    /**
+     * 前序遍历
+     *
+     * @param node    子树根节点
+     * @param prefixs 查询到该节点前所遍历过的前缀
+     */
+    public List<TrieNode> getAllNodes(TrieNode node, String prefixs) {
+        List<TrieNode> list = new ArrayList<>();
+        if (node.nodeState == 1) {// 当前即为一个单词
+            list.add(node);
+        }
+
+        List<TrieNode> children = node.next;
+        for (TrieNode trieNode : children) {
+            // //递归调用前序遍历
+            String tempStr = prefixs + trieNode.nodeName;
+            list.addAll(getAllNodes(trieNode, tempStr));
         }
         return list;
     }

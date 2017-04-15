@@ -14,6 +14,7 @@ import java.util.List;
 public class Test {
 
     public static void main(String[] args) {
+
         String[] displayName = new String[]{"hello", "hell"};
         List<ValueInfo> list = new ArrayList<>();
         for (String content : displayName) {
@@ -47,8 +48,7 @@ public class Test {
         }
         System.out.println(IndexTrieMain.buildTrie(list));
         System.out.println(IndexTrieMain.getAllWords());
-        System.out.println(IndexTrieMain.search("hell", 4));
-        System.out.println(IndexTrieMain.getAllWords());
+        System.out.println(IndexTrieMain.getAllNodes());
 
     }
 
