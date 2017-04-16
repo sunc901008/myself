@@ -51,7 +51,6 @@ public class IndexTrie {
                 node.valueInfo.add(valueInfo);
             }
         } else {
-            node.prefixCount++;
             String str = word.substring(0, 1);
             List<TrieNode> children = node.next;
             TrieNode trieNode = new TrieNode();
@@ -145,11 +144,9 @@ public class IndexTrie {
                 list.addAll(fullSearch(trieNode, searchNext, matchedWord + temp, inputWord));
             }
         } else {
-            if (node.prefixCount > 0) {
-                List<String> preTraversal = preTraversal(node, matchedWord);
-                preTraversal.remove(matchedWord); // depthSearch 里已经包含了全匹配单词，所以去除全词
-                list.addAll(preTraversal);
-            }
+            List<String> preTraversal = preTraversal(node, matchedWord);
+            preTraversal.remove(matchedWord); // depthSearch 里已经包含了全匹配单词，所以去除全词
+            list.addAll(preTraversal);
         }
         return list;
     }
@@ -179,11 +176,10 @@ public class IndexTrie {
                 depthSearch(trieNode, list, word.substring(1), matchedWord + str);
             }
         } else {
-            if (node.prefixCount > 0) {// 若匹配单词结束,但是trie中的单词并没有完全找到,需继续找到trie中的单词结束.
-                List<String> preTraversal = preTraversal(node, matchedWord);
-                preTraversal.remove(matchedWord); // depthSearch 里已经包含了全匹配单词，所以去除全词
-                list.addAll(preTraversal);
-            }
+            // 若匹配单词结束,但是trie中的单词并没有完全找到,需继续找到trie中的单词结束.
+            List<String> preTraversal = preTraversal(node, matchedWord);
+            preTraversal.remove(matchedWord); // depthSearch 里已经包含了全匹配单词，所以去除全词
+            list.addAll(preTraversal);
         }
         return list;
     }
@@ -220,26 +216,21 @@ public class IndexTrie {
      * 遍历Trie树,返回所有节点
      */
     public List<TrieNode> getAllNodes() {
-        return getAllNodes(this.root, "");
+        return getAllNodes(this.root);
     }
 
     /**
      * 前序遍历
      *
-     * @param node    子树根节点
-     * @param prefixs 查询到该节点前所遍历过的前缀
+     * @param node 子树根节点
      */
-    public List<TrieNode> getAllNodes(TrieNode node, String prefixs) {
+    public List<TrieNode> getAllNodes(TrieNode node) {
         List<TrieNode> list = new ArrayList<>();
-        if (node.nodeState == 1) {// 当前即为一个单词
-            list.add(node);
-        }
-
+        list.add(node);
         List<TrieNode> children = node.next;
         for (TrieNode trieNode : children) {
             // //递归调用前序遍历
-            String tempStr = prefixs + trieNode.nodeName;
-            list.addAll(getAllNodes(trieNode, tempStr));
+            list.addAll(getAllNodes(trieNode));
         }
         return list;
     }
@@ -331,6 +322,25 @@ public class IndexTrie {
         }
         return node;
     }
+//
+//    // 根据nodeId获取节点
+//    private TrieNode getNodeById(String nodeId) {
+//        return getNodeById(this.root, nodeId);
+//    }
+//
+//    private TrieNode getNodeById(TrieNode node, String nodeId) {
+//        if (node.nodeId.equals(nodeId)) {
+//            return node;
+//        }
+//        List<TrieNode> children = node.next;
+//        for (TrieNode trieNode : children) {
+//            if (trieNode.nodeId.equals(nodeId)) {
+//                node = trieNode;
+//                break;
+//            }
+//        }
+//        return node;
+//    }
 
     public boolean isLock() {
         return lock;

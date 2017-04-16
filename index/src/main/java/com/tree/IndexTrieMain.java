@@ -51,25 +51,25 @@ public class IndexTrieMain {
         }
     }
 
-    public static long buildTrie() {
-        JsonObject json = new JsonObject().put("table", "users").put("column", "displayname").put("path", "display.csv");
+    public static long buildTrie(String table, String column, String file, String type) {
+        JsonObject json = new JsonObject().put("table", table).put("column", column).put("type", type).put("path", dataPath + file);
         return buildTrie(json);
+    }
+
+    public static long buildTrie() {
+        return buildTrie("users", "displayname","columnValue", "display.csv");
     }
 
     public static long buildTrie(JsonObject json) {
         List<ValueInfo> list = new ArrayList<>();
-        String path = dataPath + json.getString("path");
+        String path = json.getString("path");
         String table = json.getString("table");
         String column = json.getString("column");
-        String type = json.getString("type", "columnValue");
+        String type = json.getString("type");
         try {
             BufferedReader reader = new BufferedReader(new FileReader(path));
             String line;
-            int count = 1;
             while ((line = reader.readLine()) != null) {
-                if (count % 10000 == 0)
-                    System.out.println("count : " + count);
-                count++;
                 ValueInfo valueInfo = new ValueInfo();
                 valueInfo.setTable(table);
                 valueInfo.setColumn(column);
@@ -115,15 +115,62 @@ public class IndexTrieMain {
     }
 
     //  index 持久化
-    public static long store(){
-        // TODO: 2017/4/15
-        return 0;
+    public static long store() {
+        return store(indexBackup);
+    }
+
+    public static long store(String path) {
+        Date start = new Date();
+        File file = new File(path);
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+
+            for (TrieNode node : IndexTrieMain.getAllNodes()) {
+                bw.write(node.toString() + "\n");
+            }
+            bw.close();
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Date end = new Date();
+        return end.getTime() - start.getTime();
     }
 
     //  从磁盘恢复index
-    public static long restore(){
-        // TODO: 2017/4/15
-        return 0;
+    public static long restore() {
+        return restore(indexBackup);
+    }
+
+    public static long restore(String path) {
+        Date start = new Date();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(path));
+            String line;
+            if ((line = reader.readLine()) != null) {
+                JsonObject json = new JsonObject(line);
+                IndexTrieMain.trie.root = TrieNode.JsonStringToTriNode(json);
+            }
+            while ((line = reader.readLine()) != null) {
+                JsonObject json = new JsonObject(line);
+                TrieNode node = TrieNode.JsonStringToTriNode(json);
+                for (TrieNode trieNode : getAllNodes()) {
+                    if (trieNode.nodeId.equals(node.parentId)) {
+                        trieNode.next.add(node);
+                        break;
+                    }
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Date end = new Date();
+        return end.getTime() - start.getTime();
     }
 
     public static void lock() {

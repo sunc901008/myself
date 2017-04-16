@@ -1,7 +1,6 @@
 package com.tree;
 
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class BuildController implements Handler<RoutingContext> {
@@ -11,9 +10,10 @@ public class BuildController implements Handler<RoutingContext> {
         String path = event.request().getParam("path");
         String table = event.request().getParam("table");
         String column = event.request().getParam("column");
-        JsonObject json = new JsonObject().put("table", table).put("column", column).put("path", path);
+        String param = event.request().getParam("type");
+        String type = "".equals(param) ? "" : param;
         event.vertx().executeBlocking(future -> {
-            future.complete(IndexTrieMain.buildTrie(json));
+            future.complete(IndexTrieMain.buildTrie(table, column, type, path));
         }, result -> {
             event.response().end(result.result() + " total milliseconds");
         });

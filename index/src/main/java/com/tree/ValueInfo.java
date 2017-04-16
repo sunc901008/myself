@@ -1,5 +1,7 @@
 package com.tree;
 
+import io.vertx.core.json.JsonObject;
+
 /**
  * creator: sunc
  * date: 2017/4/12
@@ -17,12 +19,37 @@ public class ValueInfo {
         this(null, null, null, null, 0);
     }
 
-    public ValueInfo(String table, String column, String content, String type, float score) {
+    ValueInfo(String table, String column, String content, String type, float score) {
         this.table = table;
         this.column = column;
         this.content = content;
         this.type = type;
         this.score = score;
+    }
+
+    @Override
+    public String toString() {
+        JsonObject json = new JsonObject();
+        json.put("table", this.table);
+        json.put("column", this.column);
+        json.put("content", this.content);
+        json.put("type", this.type);
+        json.put("score", this.score);
+        return json.toString();
+    }
+
+    private static ValueInfo JsonStringToTriNode(JsonObject json) {
+        String table = json.getString("table", "");
+        String column = json.getString("column", "");
+        String content = json.getString("content", "");
+        String type = json.getString("type", "");
+        float score = json.getFloat("score", 0f);
+        return new ValueInfo(table, column, content, type, score);
+    }
+
+    static ValueInfo JsonStringToTriNode(String jsonString) {
+        JsonObject json = new JsonObject(jsonString);
+        return JsonStringToTriNode(json);
     }
 
     public void setTable(String table) {
