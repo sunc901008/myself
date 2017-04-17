@@ -3,11 +3,12 @@ package com.tree;
 import com.commons.FileOperate;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.xerial.snappy.Snappy;
+//import org.xerial.snappy.Snappy;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,8 @@ class TrieStore {
                 file.createNewFile();
             }
             FileOutputStream fos = new FileOutputStream(path);
-            fos.write(Snappy.compress(json.toString()));
+//            fos.write(Snappy.compress(json.toString()));
+            fos.write(json.toString().getBytes());
             fos.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,8 +45,8 @@ class TrieStore {
     private static JsonObject nodeToJson(TrieNode node) {
         JsonObject json = new JsonObject();
         json.put("nodeName", node.nodeName);
-        json.put("nodeId", node.nodeId);
-        json.put("parentId", node.parentId);
+//        json.put("nodeId", node.nodeId);
+//        json.put("parentId", node.parentId);
         json.put("nodeState", node.nodeState);
         List<ValueInfo> valueInfo = node.valueInfo;
         JsonArray values = new JsonArray();
@@ -69,11 +71,12 @@ class TrieStore {
 
     static TrieNode restore(String path) {
         JsonObject json = null;
-        try {
-            json = new JsonObject(new String(Snappy.uncompress(FileOperate.toByteArray(path))));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            json = new JsonObject(new String(Snappy.uncompress(FileOperate.toByteArray(path))));
+        json = new JsonObject(new String(FileOperate.toByteArray(path)));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         if (json == null) {
             return new TrieNode();
         }
@@ -83,15 +86,23 @@ class TrieStore {
     private static TrieNode jsonToNode(JsonObject json) {
         TrieNode node = new TrieNode();
         node.nodeName = json.getString("nodeName");
-        node.nodeId = json.getString("nodeId");
-        node.parentId = json.getString("parentId");
+//        node.nodeId = json.getString("nodeId");
+//        node.parentId = json.getString("parentId");
         node.nodeState = json.getInteger("nodeState");
         JsonArray value = json.getJsonArray("valueInfo", new JsonArray());
-        value.forEach(v -> node.valueInfo.add(ValueInfo.JsonObjectToTriNode((JsonObject) v)));
+        value.forEach(v -> {
+            if (node.valueInfo == null)
+                node.valueInfo = new ArrayList<>();
+            node.valueInfo.add(ValueInfo.JsonObjectToTriNode((JsonObject) v));
+        });
         JsonArray score = json.getJsonArray("maxScore", new JsonArray());
         score.forEach(s -> node.maxScore.add((Float) s));
         JsonArray next = json.getJsonArray("next", new JsonArray());
-        next.forEach(n -> node.next.add(jsonToNode((JsonObject) n)));
+        next.forEach(n -> {
+            if (node.next == null)
+                node.next = new ArrayList<>();
+            node.next.add(jsonToNode((JsonObject) n));
+        });
         return node;
     }
 

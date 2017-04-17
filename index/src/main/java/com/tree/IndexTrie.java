@@ -41,34 +41,40 @@ class IndexTrie {
             String content = valueInfo.getContent();
             String type = valueInfo.getType();
             boolean bool = false;//表示是否已经存了该信息. false 表示尚未存储
-            for (ValueInfo v : node.valueInfo) {
-                if (v.getTable().equals(table)
-                        && v.getColumn().equals(column)
-                        && v.getContent().equals(content)
-                        && v.getType().equals(type)) {
-                    bool = true;
+            if (node.valueInfo != null) {
+                for (ValueInfo v : node.valueInfo) {
+                    if (v.getTable().equals(table)
+                            && v.getColumn().equals(column)
+                            && v.getContent().equals(content)
+                            && v.getType().equals(type)) {
+                        bool = true;
+                    }
                 }
             }
             if (!bool) {
+                if (node.valueInfo == null)
+                    node.valueInfo = new ArrayList<>();
                 node.valueInfo.add(valueInfo);
             }
         } else {
             String str = word.substring(0, 1);
-            List<TrieNode> children = node.next;
-            TrieNode trieNode = new TrieNode();
-            trieNode.nodeName = str;
             boolean bool = true;
-            for (TrieNode t : children) {
-                if (t.nodeName.equals(str)) {
-                    bool = false;
-                    trieNode = t;
-                    addWord(trieNode, word.substring(1), valueInfo);
-                    break;
+            if (node.next != null) {
+                for (TrieNode t : node.next) {
+                    if (t.nodeName.equals(str)) {
+                        bool = false;
+                        addWord(t, word.substring(1), valueInfo);
+                        break;
+                    }
                 }
             }
             if (bool) {
-                trieNode.parentId = node.nodeId;
-                children.add(trieNode);
+//                trieNode.parentId = node.nodeId;
+                TrieNode trieNode = new TrieNode(str);
+                if (node.next == null) {
+                    node.next = new ArrayList<>();
+                }
+                node.next.add(trieNode);
                 // 添加下一个字符
                 addWord(trieNode, word.substring(1), valueInfo);
             }
@@ -205,11 +211,12 @@ class IndexTrie {
             list.add(prefixs);
         }
 
-        List<TrieNode> children = node.next;
-        for (TrieNode trieNode : children) {
-            // //递归调用前序遍历
-            String tempStr = prefixs + trieNode.nodeName;
-            list.addAll(preTraversal(trieNode, tempStr));
+        if (node.next != null) {
+            for (TrieNode trieNode : node.next) {
+                // //递归调用前序遍历
+                String tempStr = prefixs + trieNode.nodeName;
+                list.addAll(preTraversal(trieNode, tempStr));
+            }
         }
         return list;
     }
@@ -229,10 +236,11 @@ class IndexTrie {
     private List<TrieNode> getAllNodesDFS(TrieNode node) {
         List<TrieNode> list = new ArrayList<>();
         list.add(node);
-        List<TrieNode> children = node.next;
-        for (TrieNode trieNode : children) {
-            // //递归调用前序遍历
-            list.addAll(getAllNodesDFS(trieNode));
+        if (node.next != null) {
+            for (TrieNode trieNode : node.next) {
+                // //递归调用前序遍历
+                list.addAll(getAllNodesDFS(trieNode));
+            }
         }
         return list;
     }
@@ -257,9 +265,10 @@ class IndexTrie {
         while (!queue.isEmpty()) {
             tempNode = queue.poll();
             list.add(tempNode);
-            List<TrieNode> children = tempNode.next;
-            for (TrieNode trieNode : children) {
-                queue.offer(trieNode);
+            if (tempNode.next != null) {
+                for (TrieNode trieNode : tempNode.next) {
+                    queue.offer(trieNode);
+                }
             }
         }
         return list;
@@ -284,22 +293,27 @@ class IndexTrie {
     private List<ValueInfo> preTraversal1(TrieNode node, String prefixs, int count) {
         List<ValueInfo> list = new ArrayList<>();
         if (node.nodeState == 1) {// 当前即为一个单词
-            int min = Math.min(node.valueInfo.size(), count);
-            for (int i = 0; i < min; i++) {
-                list.add(node.valueInfo.get(i));
+            int valueInfoCount = 0;
+            if (node.valueInfo != null) {
+                valueInfoCount = node.valueInfo.size();
+                int min = Math.min(valueInfoCount, count);
+                for (int i = 0; i < min; i++) {
+                    list.add(node.valueInfo.get(i));
+                }
             }
             if (list.size() >= count)
                 return list;
             count = count - list.size();
         }
 
-        List<TrieNode> children = node.next;
-        for (TrieNode trieNode : children) {
-            // //递归调用前序遍历
-            String tempStr = prefixs + trieNode.nodeName;
-            list.addAll(preTraversal1(trieNode, tempStr, count));
-            if (list.size() >= count)
-                return list;
+        if (node.next != null) {
+            for (TrieNode trieNode : node.next) {
+                // //递归调用前序遍历
+                String tempStr = prefixs + trieNode.nodeName;
+                list.addAll(preTraversal1(trieNode, tempStr, count));
+                if (list.size() >= count)
+                    return list;
+            }
         }
         return list;
     }
@@ -338,13 +352,14 @@ class IndexTrie {
         char[] chs = word.toCharArray();
         for (char ch : chs) {
             String str = String.valueOf(ch);
-            List<TrieNode> children = node.next;
             boolean bool = false;
-            for (TrieNode trieNode : children) {
-                if (trieNode.nodeName.equals(str)) {
-                    node = trieNode;
-                    bool = true;
-                    break;
+            if (node.next != null) {
+                for (TrieNode trieNode : node.next) {
+                    if (trieNode.nodeName.equals(str)) {
+                        node = trieNode;
+                        bool = true;
+                        break;
+                    }
                 }
             }
             if (!bool)

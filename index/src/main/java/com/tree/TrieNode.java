@@ -2,7 +2,6 @@ package com.tree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * creator: sunc
@@ -12,16 +11,16 @@ import java.util.UUID;
 
 public class TrieNode {
 
-    final List<TrieNode> next;
+    List<TrieNode> next;
 
-    final List<ValueInfo> valueInfo;
+    List<ValueInfo> valueInfo;
 
     String nodeName;
 
     //  节点id
-    String nodeId;
+//    String nodeId;
     //  父节点id
-    String parentId;
+//    String parentId;
 
     /**
      * 当前TrieNode状态 ,默认 0 , 1表示从根节点到当前节点的路径为一个词,即叶子节点
@@ -31,13 +30,19 @@ public class TrieNode {
     final List<Float> maxScore;
 
     TrieNode() {
-        next = new ArrayList<>();
-        nodeState = 0;
-        maxScore = new ArrayList<>();
-        valueInfo = new ArrayList<>();
-        nodeName = "";
-        nodeId = UUID.randomUUID().toString().replaceAll("-", "");
-        parentId = "";
+        this("");
+//        nodeId = UUID.randomUUID().toString().replaceAll("-", "");
+//        parentId = "";
+    }
+
+    TrieNode(String nodeName) {
+        this.next = null;
+        this.nodeState = 0;
+        this.maxScore = new ArrayList<>();
+        this.valueInfo = null;
+        this.nodeName = nodeName;
+//        nodeId = UUID.randomUUID().toString().replaceAll("-", "");
+//        parentId = "";
     }
 
 }
