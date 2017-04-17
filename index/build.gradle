@@ -54,6 +54,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.hive/hive-jdbc
 //    compile group: 'org.apache.hive', name: 'hive-jdbc', version: '2.1.1'
 
+    // https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java
+    compile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.2.6'
+
 }
 
 def REMOTE_TARGET = '/srv/focus/index'    //服务器项目存储目录

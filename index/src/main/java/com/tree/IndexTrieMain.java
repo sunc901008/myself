@@ -1,11 +1,5 @@
 package com.tree;
 
-/**
- * creator: sunc
- * date: 2017/4/12
- * description:
- */
-
 import io.vertx.core.json.JsonObject;
 
 import java.io.*;
@@ -51,13 +45,9 @@ public class IndexTrieMain {
         }
     }
 
-    public static long buildTrie(String table, String column, String file, String type) {
+    static long buildTrie(String table, String column, String file, String type) {
         JsonObject json = new JsonObject().put("table", table).put("column", column).put("type", type).put("path", dataPath + file);
         return buildTrie(json);
-    }
-
-    public static long buildTrie() {
-        return buildTrie("users", "displayname","columnValue", "display.csv");
     }
 
     public static long buildTrie(JsonObject json) {
@@ -87,8 +77,14 @@ public class IndexTrieMain {
     public static long buildTrie(List<ValueInfo> list) {
         Date start = new Date();
         lock();
+        int i = 1;
+        System.out.println("all node count : " + list.size());
         for (ValueInfo valueInfo : list) {
             trie.addWord(valueInfo);
+            if (i % 10000 == 0) {
+                System.out.println("has add node count : " + i);
+            }
+            i++;
         }
         unlock();
         Date end = new Date();
@@ -110,8 +106,12 @@ public class IndexTrieMain {
         return trie.getAllWords();
     }
 
-    public static List<TrieNode> getAllNodes() {
-        return trie.getAllNodes();
+    public static List<TrieNode> getAllNodesDFS() {
+        return trie.getAllNodesDFS();
+    }
+
+    private static List<TrieNode> getAllNodesBFS() {
+        return trie.getAllNodesBFS();
     }
 
     //  index 持久化
@@ -120,25 +120,7 @@ public class IndexTrieMain {
     }
 
     public static long store(String path) {
-        Date start = new Date();
-        File file = new File(path);
-        try {
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
-
-            for (TrieNode node : IndexTrieMain.getAllNodes()) {
-                bw.write(node.toString() + "\n");
-            }
-            bw.close();
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Date end = new Date();
-        return end.getTime() - start.getTime();
+        return TrieStore.store(trie.root, path);
     }
 
     //  从磁盘恢复index
@@ -148,36 +130,16 @@ public class IndexTrieMain {
 
     public static long restore(String path) {
         Date start = new Date();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(path));
-            String line;
-            if ((line = reader.readLine()) != null) {
-                JsonObject json = new JsonObject(line);
-                IndexTrieMain.trie.root = TrieNode.JsonStringToTriNode(json);
-            }
-            while ((line = reader.readLine()) != null) {
-                JsonObject json = new JsonObject(line);
-                TrieNode node = TrieNode.JsonStringToTriNode(json);
-                for (TrieNode trieNode : getAllNodes()) {
-                    if (trieNode.nodeId.equals(node.parentId)) {
-                        trieNode.next.add(node);
-                        break;
-                    }
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Date end = new Date();
-        return end.getTime() - start.getTime();
+        trie.root = TrieStore.restore(path);
+        Date end1 = new Date();
+        return end1.getTime() - start.getTime();
     }
 
-    public static void lock() {
+    private static void lock() {
         trie.setLock(true);
     }
 
-    public static void unlock() {
+    private static void unlock() {
         trie.setLock(false);
     }
 

@@ -5,7 +5,11 @@ import com.tree.TrieNode;
 import com.tree.ValueInfo;
 import io.vertx.core.json.JsonObject;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,14 +19,79 @@ import java.util.List;
  */
 public class Test {
 
-    public static void main(String[] args) {
 
-        test3();
+    private static final String file = "f:/display.csv";
+    private static final String word = "teacherrayl";
 
+    public static void main(String[] args) throws Exception {
+//        test40();
+//        test41();
+        test20();
+//        test21();
     }
 
-    public static List<ValueInfo> create() {
-        String[] displayName = new String[]{"abc", "ab"};
+    public static void test20() {
+        JsonObject json = new JsonObject().put("table", "tags").put("column", "name").put("type", "columnValue").put("path", file);
+        System.out.println(IndexTrieMain.buildTrie(json));
+        Date start = new Date();
+        List<TrieNode> list = IndexTrieMain.getAllNodesDFS();
+        Date end = new Date();
+        long time = end.getTime() - start.getTime();
+        System.out.println(list.size() + ":" + time);
+        System.out.println(IndexTrieMain.search(word, 10));
+        System.out.println(IndexTrieMain.store("g:/indexBackup"));
+    }
+
+    public static void test21() {
+        System.out.println(IndexTrieMain.restore("g:/indexBackup"));
+        Date start = new Date();
+        List<TrieNode> list = IndexTrieMain.getAllNodesDFS();
+        Date end = new Date();
+        long time = end.getTime() - start.getTime();
+        System.out.println(list.size() + ":" + time);
+        System.out.println(IndexTrieMain.search(word, 10));
+    }
+
+    public static void test40() {
+        System.out.println(IndexTrieMain.buildTrie(create()));
+        System.out.println(IndexTrieMain.search("abc", 10));
+        System.out.println(IndexTrieMain.store("g:/indexBackup"));
+    }
+
+    public static void test41() {
+        System.out.println(IndexTrieMain.restore("g:/indexBackup"));
+        System.out.println(IndexTrieMain.search("abc", 10));
+    }
+
+    public static void createFile() {
+        String[] chars = {"a", "b", "c", "d", "e", "f",
+                "g", "h", "i", "g", "k", "l", "m", "n",
+                "o", "p", "q", "r", "s", "t", "u", "v",
+                "w", "x", "y", "z", "0", "1", "2", "3",
+                "4", "5", "6", "7", "8", "9"};
+        try {
+            FileWriter fw = new FileWriter(new File(file));
+            int count = 0;
+            while (count < 100000) {
+                int len = new Float(Math.random() * 5 + 5).intValue();// 5<=  <10
+                StringBuilder str = new StringBuilder();
+                for (int i = 0; i < len; i++) {
+                    int index = new Float(Math.random() * chars.length).intValue();
+                    str.append(chars[index]);
+                }
+                fw.write(str.toString() + "\n");
+                count++;
+                if (count % 10000 == 0)
+                    System.out.println("create number : " + count);
+            }
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static List<ValueInfo> create() {
+        String[] displayName = new String[]{"a", "ab"};
         List<ValueInfo> list = new ArrayList<>();
         for (String content : displayName) {
             ValueInfo valueInfo = new ValueInfo();
@@ -32,7 +101,7 @@ public class Test {
             valueInfo.setContent(content);
             list.add(valueInfo);
         }
-        String[] name = new String[]{"abc"};
+        String[] name = new String[]{"ac", "b", "abc"};
         for (String content : name) {
             ValueInfo valueInfo = new ValueInfo();
             valueInfo.setTable("users");
@@ -43,27 +112,4 @@ public class Test {
         }
         return list;
     }
-
-    public static void test1() {
-
-        System.out.println(IndexTrieMain.buildTrie(create()));
-        System.out.println(IndexTrieMain.getAllWords());
-        List<TrieNode> nodes = IndexTrieMain.getAllNodes();
-        nodes.forEach(v -> System.out.println(v.toString()));
-        System.out.println(IndexTrieMain.search("ab", 10));
-    }
-
-    public static void test3() {
-        System.out.println(IndexTrieMain.restore("g:/indexBackup"));
-        System.out.println(IndexTrieMain.search("architecture", 10));
-    }
-
-
-    public static void test2() {
-        JsonObject json = new JsonObject().put("table", "tags").put("column", "name").put("type", "columnValue").put("path", "f:/tagname.csv");
-        System.out.println(IndexTrieMain.buildTrie(json));
-        System.out.println(IndexTrieMain.store("g:/indexBackup"));
-    }
-
-
 }
