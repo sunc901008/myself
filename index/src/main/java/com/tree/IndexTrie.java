@@ -1,6 +1,8 @@
 package com.tree;
 
 
+import com.commons.Commons;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +11,7 @@ import java.util.Queue;
 class IndexTrie {
 
     // 是否锁定(重建和更新index的时候会锁定，操作完毕后解锁)
-    private boolean lock;
+    private int lock = Commons.UNLOCK;
 
     // trie树根
     TrieNode root = new TrieNode();
@@ -21,7 +23,6 @@ class IndexTrie {
 //    private static String chinesePattern = "[\u4e00-\u9fa5]";
 
     IndexTrie() {
-        this.lock = false;
     }
 
     void addWord(ValueInfo valueInfo) {
@@ -41,45 +42,72 @@ class IndexTrie {
             String content = valueInfo.getContent();
             String type = valueInfo.getType();
             boolean bool = false;//表示是否已经存了该信息. false 表示尚未存储
-            if (node.valueInfo != null) {
-                for (ValueInfo v : node.valueInfo) {
-                    if (v.getTable().equals(table)
-                            && v.getColumn().equals(column)
-                            && v.getContent().equals(content)
-                            && v.getType().equals(type)) {
-                        bool = true;
-                    }
+            for (ValueInfo v : node.valueInfo) {
+                if (v.getTable().equals(table)
+                        && v.getColumn().equals(column)
+                        && v.getContent().equals(content)
+                        && v.getType().equals(type)) {
+                    bool = true;
                 }
             }
             if (!bool) {
-                if (node.valueInfo == null)
-                    node.valueInfo = new ArrayList<>();
                 node.valueInfo.add(valueInfo);
             }
         } else {
             String str = word.substring(0, 1);
             boolean bool = true;
-            if (node.next != null) {
-                for (TrieNode t : node.next) {
-                    if (t.nodeName.equals(str)) {
-                        bool = false;
-                        addWord(t, word.substring(1), valueInfo);
-                        break;
-                    }
+            for (TrieNode t : node.next) {
+                if (t.nodeName.equals(str)) {
+                    bool = false;
+                    addWord(t, word.substring(1), valueInfo);
+                    break;
                 }
             }
             if (bool) {
-//                trieNode.parentId = node.nodeId;
-                TrieNode trieNode = new TrieNode(str);
-                if (node.next == null) {
-                    node.next = new ArrayList<>();
-                }
+                TrieNode trieNode = new TrieNode(str, node.nodeId);
                 node.next.add(trieNode);
                 // 添加下一个字符
                 addWord(trieNode, word.substring(1), valueInfo);
             }
         }
     }
+
+//    private void addWordFor(TrieNode node, String word, ValueInfo valueInfo) {
+//        for (char c : word.toCharArray()) {
+//            String str = String.valueOf(c);
+//            boolean bool = true;
+//            for (TrieNode t : node.next) {
+//                if (t.nodeName.equals(str)) {
+//                    bool = false;
+//                    node = t;
+//                    break;
+//                }
+//            }
+//            if (bool) {
+//                TrieNode trieNode = new TrieNode(str, node.nodeId);
+//                node.next.add(trieNode);
+//                // 添加下一个字符
+//                node = trieNode;
+//            }
+//        }
+//        node.nodeState = 1;//添加完毕，设置为叶子节点
+//        String table = valueInfo.getTable();
+//        String column = valueInfo.getColumn();
+//        String content = valueInfo.getContent();
+//        String type = valueInfo.getType();
+//        boolean bool = false;//表示是否已经存了该信息. false 表示尚未存储
+//        for (ValueInfo v : node.valueInfo) {
+//            if (v.getTable().equals(table)
+//                    && v.getColumn().equals(column)
+//                    && v.getContent().equals(content)
+//                    && v.getType().equals(type)) {
+//                bool = true;
+//            }
+//        }
+//        if (!bool) {
+//            node.valueInfo.add(valueInfo);
+//        }
+//    }
 
     // 前缀搜索
 //    public List<String> prefixSearchWord(String word) {
@@ -196,29 +224,21 @@ class IndexTrie {
      * 遍历Trie树,返回所有index
      */
     List<String> getAllWords() {
-        return preTraversal(this.root, "");
+        List<String> list = new ArrayList<>();
+        for (ValueInfo v : preTraversal(this.root, "")) {
+            list.add(v.getContent());
+        }
+        return list;
     }
 
     /**
      * 前序遍历
      *
      * @param node    子树根节点
-     * @param prefixs 查询到该节点前所遍历过的前缀
+     * @param prefix 查询到该节点前所遍历过的前缀
      */
-    private List<String> preTraversal(TrieNode node, String prefixs) {
-        List<String> list = new ArrayList<>();
-        if (node.nodeState == 1) {// 当前即为一个单词
-            list.add(prefixs);
-        }
-
-        if (node.next != null) {
-            for (TrieNode trieNode : node.next) {
-                // //递归调用前序遍历
-                String tempStr = prefixs + trieNode.nodeName;
-                list.addAll(preTraversal(trieNode, tempStr));
-            }
-        }
-        return list;
+    private List<ValueInfo> preTraversal(TrieNode node, String prefix) {
+        return preTraversal(node, prefix, Integer.MAX_VALUE);
     }
 
     /**
@@ -236,11 +256,9 @@ class IndexTrie {
     private List<TrieNode> getAllNodesDFS(TrieNode node) {
         List<TrieNode> list = new ArrayList<>();
         list.add(node);
-        if (node.next != null) {
-            for (TrieNode trieNode : node.next) {
-                // //递归调用前序遍历
-                list.addAll(getAllNodesDFS(trieNode));
-            }
+        for (TrieNode trieNode : node.next) {
+            // //递归调用前序遍历
+            list.addAll(getAllNodesDFS(trieNode));
         }
         return list;
     }
@@ -265,10 +283,8 @@ class IndexTrie {
         while (!queue.isEmpty()) {
             tempNode = queue.poll();
             list.add(tempNode);
-            if (tempNode.next != null) {
-                for (TrieNode trieNode : tempNode.next) {
-                    queue.offer(trieNode);
-                }
+            for (TrieNode trieNode : tempNode.next) {
+                queue.offer(trieNode);
             }
         }
         return list;
@@ -280,7 +296,7 @@ class IndexTrie {
             return new ArrayList<>();
         }
         word = word.toLowerCase();
-        List<ValueInfo> list = preTraversal1(getNode(word), word, count);
+        List<ValueInfo> list = preTraversal(getNode(word), word, count);
         return list.subList(0, Math.min(count, list.size()));
     }
 
@@ -288,63 +304,29 @@ class IndexTrie {
      * 前序遍历
      *
      * @param node    子树根节点
-     * @param prefixs 查询到该节点前所遍历过的前缀
+     * @param prefix 查询到该节点前所遍历过的前缀
      */
-    private List<ValueInfo> preTraversal1(TrieNode node, String prefixs, int count) {
+    private List<ValueInfo> preTraversal(TrieNode node, String prefix, int count) {
         List<ValueInfo> list = new ArrayList<>();
         if (node.nodeState == 1) {// 当前即为一个单词
-            int valueInfoCount = 0;
-            if (node.valueInfo != null) {
-                valueInfoCount = node.valueInfo.size();
-                int min = Math.min(valueInfoCount, count);
-                for (int i = 0; i < min; i++) {
-                    list.add(node.valueInfo.get(i));
-                }
+            int min = Math.min(node.valueInfo.size(), count);
+            for (int i = 0; i < min; i++) {
+                list.add(node.valueInfo.get(i));
             }
             if (list.size() >= count)
                 return list;
             count = count - list.size();
         }
 
-        if (node.next != null) {
-            for (TrieNode trieNode : node.next) {
-                // //递归调用前序遍历
-                String tempStr = prefixs + trieNode.nodeName;
-                list.addAll(preTraversal1(trieNode, tempStr, count));
-                if (list.size() >= count)
-                    return list;
-            }
+        for (TrieNode trieNode : node.next) {
+            // //递归调用前序遍历
+            String tempStr = prefix + trieNode.nodeName;
+            list.addAll(preTraversal(trieNode, tempStr, count));
+            if (list.size() >= count)
+                return list;
         }
         return list;
     }
-
-//    /**
-//     * 前序遍历
-//     *
-//     * @param node    子树根节点
-//     * @param prefixs 查询到该节点前所遍历过的前缀
-//     */
-//    private List<ValueInfo> preTraversal2(TrieNode node, String prefixs) {
-//        List<ValueInfo> list = new ArrayList<>();
-//        if (node.nodeState == 1) {// 当前即为一个单词
-//            list.addAll(node.valueInfo);
-//        }
-//
-//        List<TrieNode> children = node.next;
-//        for (TrieNode trieNode : children) {
-//            // //递归调用前序遍历
-//            String tempStr = prefixs + trieNode.nodeName;
-//            list.addAll(preTraversal2(trieNode, tempStr));
-//        }
-//        return list;
-//    }
-
-    // 判断某字串是否在字典树中
-//    public boolean isExist(String word) {
-//        word = word.toLowerCase();
-//        TrieNode node = getNode(word);
-//        return !node.nodeName.equals("") && node.nodeState == 1;
-//    }
 
     // 获取某字串的节点,存在则返回该节点，不存在则返回空节点
     private TrieNode getNode(String word) {
@@ -353,13 +335,11 @@ class IndexTrie {
         for (char ch : chs) {
             String str = String.valueOf(ch);
             boolean bool = false;
-            if (node.next != null) {
-                for (TrieNode trieNode : node.next) {
-                    if (trieNode.nodeName.equals(str)) {
-                        node = trieNode;
-                        bool = true;
-                        break;
-                    }
+            for (TrieNode trieNode : node.next) {
+                if (trieNode.nodeName.equals(str)) {
+                    node = trieNode;
+                    bool = true;
+                    break;
                 }
             }
             if (!bool)
@@ -387,11 +367,11 @@ class IndexTrie {
 //        return node;
 //    }
 
-    boolean isLock() {
+    int getLock() {
         return lock;
     }
 
-    void setLock(boolean lock) {
+    void setLock(int lock) {
         this.lock = lock;
     }
 

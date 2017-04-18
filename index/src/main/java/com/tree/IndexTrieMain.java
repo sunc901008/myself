@@ -1,5 +1,6 @@
 package com.tree;
 
+import com.commons.Commons;
 import io.vertx.core.json.JsonObject;
 
 import java.io.*;
@@ -15,7 +16,7 @@ public class IndexTrieMain {
 
     private static String indexBackup = "indexBackup";
 
-    private static IndexTrie trie;
+    private static final IndexTrie trie;
 
     static {
         trie = new IndexTrie();
@@ -76,24 +77,26 @@ public class IndexTrieMain {
 
     public static long buildTrie(List<ValueInfo> list) {
         Date start = new Date();
-        lock();
+        lock(Commons.INSERT);
         int i = 1;
         System.out.println("all node count : " + list.size());
-        for (ValueInfo valueInfo : list) {
-            trie.addWord(valueInfo);
+
+        for (ValueInfo value : list) {
+            trie.addWord(value);
             if (i % 10000 == 0) {
                 System.out.println("has add node count : " + i);
             }
             i++;
         }
+
         unlock();
         Date end = new Date();
         return end.getTime() - start.getTime();
     }
 
     public static JsonObject search(String word, int count) {
-        if (trie.isLock()) {
-            return new JsonObject().put("result", new ArrayList<String>()).put("state", "false");
+        if (trie.getLock() != Commons.UNLOCK) {
+            return new JsonObject().put("result", trie.getLock()).put("state", "false");
         }
         Date start = new Date();
         List<ValueInfo> list = trie.prefixSearchWordRewrite(word, count);
@@ -110,7 +113,7 @@ public class IndexTrieMain {
         return trie.getAllNodesDFS();
     }
 
-    private static List<TrieNode> getAllNodesBFS() {
+    public static List<TrieNode> getAllNodesBFS() {
         return trie.getAllNodesBFS();
     }
 
@@ -120,7 +123,7 @@ public class IndexTrieMain {
     }
 
     public static long store(String path) {
-        return TrieStore.store(trie.root, path);
+        return TrieStore.store(path);
     }
 
     //  从磁盘恢复index
@@ -130,17 +133,19 @@ public class IndexTrieMain {
 
     public static long restore(String path) {
         Date start = new Date();
+        lock(Commons.INSERT);
         trie.root = TrieStore.restore(path);
+        unlock();
         Date end1 = new Date();
         return end1.getTime() - start.getTime();
     }
 
-    private static void lock() {
-        trie.setLock(true);
+    private static void lock(int lock) {
+        trie.setLock(lock);
     }
 
     private static void unlock() {
-        trie.setLock(false);
+        trie.setLock(Commons.UNLOCK);
     }
 
 }
