@@ -1,5 +1,6 @@
 package com.tree;
 
+import com.commons.Commons;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
@@ -11,7 +12,8 @@ public class BuildController implements Handler<RoutingContext> {
         String table = event.request().getParam("table");
         String column = event.request().getParam("column");
         String param = event.request().getParam("type");
-        String type = "".equals(param) ? "" : param;
+        param = "".equals(param) ? "" : param;
+        int type = Commons.columnNumber(param);
         event.vertx().executeBlocking(future -> {
             future.complete(IndexTrieMain.buildTrie(table, column, type, path));
         }, result -> {

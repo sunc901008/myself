@@ -1,14 +1,16 @@
 package com;
 
 import com.tree.IndexTrieMain;
-import com.tree.TrieNode;
-import com.tree.ValueInfo;
 import io.vertx.core.json.JsonObject;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.nio.file.Files;
+import java.util.Date;
 
 /**
  * creator: sunc
@@ -22,57 +24,46 @@ public class Test {
     private static final String word = "teacherrayl";
 
     public static void main(String[] args) throws Exception {
-//        test40();
-//        test41();
 //        createFile();
-        test20();
+//        test20();
 //        test21();
+
+        Date start = new Date();
+
+        encode("D:/tools/ideaIU-2017.1.exe", 1);
+
+        Date end = new Date();
+
+        System.out.println(end.getTime() - start.getTime());
 
     }
 
     public static void test20() {
-        JsonObject json = new JsonObject().put("table", "tags").put("column", "name").put("type", "columnValue").put("path", file);
+        JsonObject json = new JsonObject().put("table", "users").put("column", "displayName").put("type", 0).put("path", file);
         System.out.println(IndexTrieMain.buildTrie(json));
-        Date start = new Date();
-        List<TrieNode> list = IndexTrieMain.getAllNodesBFS();
-        Date end = new Date();
-        long time = end.getTime() - start.getTime();
-        System.out.println(list.size() + ":" + time);
         System.out.println(IndexTrieMain.search(word, 10));
-        System.out.println(IndexTrieMain.store("g:/indexBackup"));
+//        System.out.println(IndexTrieMain.getAllNodesBFS().size());
+        System.out.println(IndexTrieMain.store("g:/lucene/index/indexBackup"));
     }
 
     public static void test21() {
-        System.out.println(IndexTrieMain.restore("g:/indexBackup"));
-        Date start = new Date();
-        List<TrieNode> list = IndexTrieMain.getAllNodesBFS();
-        Date end = new Date();
-        long time = end.getTime() - start.getTime();
-        System.out.println(list.size() + ":" + time);
+        System.out.println(IndexTrieMain.restore("g:/lucene/index/indexBackup"));
         System.out.println(IndexTrieMain.search(word, 10));
-    }
+//        System.out.println(IndexTrieMain.getAllNodesBFS().size());
 
-    public static void test40() {
-        System.out.println(IndexTrieMain.buildTrie(create()));
-        Date start = new Date();
-        List<TrieNode> list = IndexTrieMain.getAllNodesBFS();
-        Date end = new Date();
-        long time = end.getTime() - start.getTime();
-        System.out.println(list.size() + ":" + time);
-        list.forEach(v -> System.out.println(v.toString()));
-        System.out.println(IndexTrieMain.search("abc", 10));
-        System.out.println(IndexTrieMain.store("g:/indexBackup"));
-    }
 
-    public static void test41() {
-        System.out.println(IndexTrieMain.restore("g:/indexBackup"));
-        Date start = new Date();
-        List<TrieNode> list = IndexTrieMain.getAllNodesBFS();
-        Date end = new Date();
-        long time = end.getTime() - start.getTime();
-        System.out.println(list.size() + ":" + time);
-        list.forEach(v -> System.out.println(v.toString()));
-        System.out.println(IndexTrieMain.search("abc", 10));
+//        try {
+//            BufferedReader br = new BufferedReader(new FileReader("g:/lucene/index/test.txt"));
+//            String line;
+//            while ((line = br.readLine()) != null) {
+//                System.out.println(line);
+//                JsonArray jsonArray = new JsonArray(line);
+//                System.out.println(jsonArray);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
     }
 
     public static void createFile() {
@@ -82,9 +73,9 @@ public class Test {
                 "w", "x", "y", "z", "0", "1", "2", "3",
                 "4", "5", "6", "7", "8", "9"};
         try {
-            FileWriter fw = new FileWriter(new File(file));
+            FileWriter fw = new FileWriter(new File("f:/test.csv"));
             int count = 0;
-            while (count < 100000) {
+            while (count < 1000) {
                 int len = new Float(Math.random() * 5 + 5).intValue();// 5<=  <10
                 StringBuilder str = new StringBuilder();
                 for (int i = 0; i < len; i++) {
@@ -102,34 +93,26 @@ public class Test {
         }
     }
 
-    private static List<ValueInfo> create() {
-        String[] displayName = new String[]{"abcd"};
-        List<ValueInfo> list = new ArrayList<>();
-        for (String content : displayName) {
-            ValueInfo valueInfo = new ValueInfo();
-            valueInfo.setTable("table");
-            valueInfo.setColumn("name");
-            valueInfo.setType("type");
-            valueInfo.setContent(content);
-            list.add(valueInfo);
-        }
-//        String[] name = new String[]{"ab"};
-//        for (String content : name) {
-//            ValueInfo valueInfo = new ValueInfo();
-//            valueInfo.setTable("users");
-//            valueInfo.setColumn("name");
-//            valueInfo.setType("columnValue");
-//            valueInfo.setContent(content);
-//            list.add(valueInfo);
-//        }
-        return list;
-    }
+    public static void encode(String file, int i) {
+        String outputFile = file + i;
+        try {
+            byte[] data = Files.readAllBytes(new File(file).toPath());
 
-    public static double fun(double number, double root) {
-        if (number == 1) {
-            return 1;
-        } else {
-            return Math.pow(root, number) + fun(number - 1, root);
+            LZ4Factory factory = LZ4Factory.safeInstance();
+
+            LZ4Compressor compressor = factory.highCompressor(i);
+            File f = new File(outputFile);
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(outputFile);
+
+            byte[] result = compressor.compress(data);
+
+            fos.write(result);
+            fos.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

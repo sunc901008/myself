@@ -30,4 +30,19 @@ public class FileOperate {
         return bos.toByteArray();
     }
 
+    // 一次性读取文件所有内容
+    public static String readToString(String filename) {
+        File file = new File(filename);
+        Long length = file.length();     //获取文件长度
+        byte[] content = new byte[length.intValue()];
+        try {
+            FileInputStream in = new FileInputStream(file);
+            in.read(content);
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new String(content);
+    }
+
 }

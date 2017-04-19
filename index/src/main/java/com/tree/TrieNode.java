@@ -22,10 +22,10 @@ public class TrieNode {
     String nodeName;
 
     //  节点id
-    public String nodeId;
+    long nodeId;
 
     //  父节点id
-    String parentId;
+    long parentId;
 
     /**
      * 当前TrieNode状态 ,默认 0 , 1表示从根节点到当前节点的路径为一个词,即叶子节点
@@ -34,16 +34,16 @@ public class TrieNode {
 
     final List<Float> maxScore;
 
-    public TrieNode() {
-        this("", "");
+    TrieNode() {
+        this("", -1);
     }
 
-    TrieNode(String nodeName, String parentId) {
+    TrieNode(String nodeName, long parentId) {
         this.next = new ArrayList<>();
         this.maxScore = new ArrayList<>();
         this.valueInfo = new ArrayList<>();
         this.nodeName = nodeName;
-        this.nodeId = Commons.id + "";
+        this.nodeId = Commons.id;
         this.parentId = parentId;
         Commons.id--;
     }
@@ -61,17 +61,34 @@ public class TrieNode {
         return json;
     }
 
-    static TrieNode toTrieNode(JsonObject json) {
-        TrieNode node = new TrieNode();
-        node.nodeState = json.getInteger("nodeState");
-        node.nodeId = json.getString("nodeId");
-        node.parentId = json.getString("parentId");
-        node.nodeName = json.getString("nodeName");
-        JsonArray score = json.getJsonArray("maxScore");
-        score.forEach(s -> node.maxScore.add((Float) s));
+    JsonArray toArray() {
+        JsonArray array = new JsonArray();
+        array.add(this.nodeName);
+        array.add(this.nodeId);
+        array.add(this.parentId);
+        array.add(this.nodeState);
+        array.add(this.maxScore);
+        JsonArray tmp = new JsonArray();
+        for (ValueInfo aValueInfo : this.valueInfo)
+            tmp.add(aValueInfo.toArray());
+        array.add(tmp);
+        return array;
+    }
 
-        JsonArray value = json.getJsonArray("valueInfo");
-        value.forEach(v -> node.valueInfo.add(ValueInfo.JsonObjectToTriNode((JsonObject) v)));
+    static TrieNode toTrieNode(String json) {
+        return toTrieNode(new JsonArray(json));
+    }
+
+    private static TrieNode toTrieNode(JsonArray json) {
+        TrieNode node = new TrieNode();
+        node.nodeState = json.getInteger(3);
+        node.nodeId = json.getLong(1);
+        node.parentId = json.getLong(2);
+        node.nodeName = json.getString(0);
+        JsonArray score = json.getJsonArray(4);
+        score.forEach(s -> node.maxScore.add((Float) s));
+        JsonArray value = json.getJsonArray(5);
+        value.forEach(v -> node.valueInfo.add(ValueInfo.JsonArrayToTriNode((JsonArray) v)));
         return node;
     }
 

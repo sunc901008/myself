@@ -3,10 +3,8 @@ package com.tree;
 
 import com.commons.Commons;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.io.*;
+import java.util.*;
 
 class IndexTrie {
 
@@ -40,13 +38,13 @@ class IndexTrie {
             String table = valueInfo.getTable();
             String column = valueInfo.getColumn();
             String content = valueInfo.getContent();
-            String type = valueInfo.getType();
+            int type = valueInfo.getType();
             boolean bool = false;//表示是否已经存了该信息. false 表示尚未存储
             for (ValueInfo v : node.valueInfo) {
                 if (v.getTable().equals(table)
                         && v.getColumn().equals(column)
                         && v.getContent().equals(content)
-                        && v.getType().equals(type)) {
+                        && v.getType() == type) {
                     bool = true;
                 }
             }
@@ -234,7 +232,7 @@ class IndexTrie {
     /**
      * 前序遍历
      *
-     * @param node    子树根节点
+     * @param node   子树根节点
      * @param prefix 查询到该节点前所遍历过的前缀
      */
     private List<ValueInfo> preTraversal(TrieNode node, String prefix) {
@@ -282,10 +280,10 @@ class IndexTrie {
         List<TrieNode> list = new ArrayList<>();
         while (!queue.isEmpty()) {
             tempNode = queue.poll();
-            list.add(tempNode);
             for (TrieNode trieNode : tempNode.next) {
                 queue.offer(trieNode);
             }
+            list.add(tempNode);
         }
         return list;
     }
@@ -303,7 +301,7 @@ class IndexTrie {
     /**
      * 前序遍历
      *
-     * @param node    子树根节点
+     * @param node   子树根节点
      * @param prefix 查询到该节点前所遍历过的前缀
      */
     private List<ValueInfo> preTraversal(TrieNode node, String prefix, int count) {
@@ -375,4 +373,129 @@ class IndexTrie {
         this.lock = lock;
     }
 
+    long store(String path) {
+        Date start = new Date();
+        File file = new File(path);
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fw = new FileWriter(path);
+            Queue<TrieNode> queue = new LinkedList<>();
+            queue.offer(this.root);
+            TrieNode tempNode;
+            int i = 1;
+            StringBuilder fileContent = new StringBuilder();
+            while (!queue.isEmpty()) {
+                tempNode = queue.poll();
+                fileContent.append(tempNode.toArray()).append("\n");
+                if (i % Commons.LIMIT_SIZE_MAX == 0) {
+                    fw.write(fileContent.toString());
+                    System.out.println(i + " nodes have been stored.");
+                    fileContent.delete(0, fileContent.length());
+                }
+                for (TrieNode trieNode : tempNode.next) {
+                    queue.offer(trieNode);
+                }
+                i++;
+            }
+            if (fileContent.length() > 0) {
+                fw.write(fileContent.toString());
+            }
+            System.out.println("all nodes have been stored. nodes count: " + i);
+            fw.close();
+//            compress(path + ".snappy", path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        file.delete();
+        Date end = new Date();
+        return end.getTime() - start.getTime();
+    }
+
+    void restore(String path) {
+        try {
+            File file = new File(path);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+//            uncompress(path + ".snappy", path);
+            BufferedReader br = new BufferedReader(new FileReader(path));
+            String line;
+            TrieNode root = new TrieNode();
+            if ((line = br.readLine()) != null) {
+                root = TrieNode.toTrieNode(line);
+            }
+
+            Queue<TrieNode> queue = new LinkedList<>();
+            Queue<TrieNode> parentQueue = new LinkedList<>();
+            Queue<TrieNode> childQueue = new LinkedList<>();
+            parentQueue.offer(root);
+
+            while ((line = br.readLine()) != null) {
+                queue.offer(TrieNode.toTrieNode(line));
+                if (queue.size() >= Commons.LIMIT_SIZE_MAX) {
+                    break;
+                }
+            }
+            TrieNode parent = parentQueue.poll();
+
+            int i = 1;
+            while (!queue.isEmpty()) {
+                TrieNode node = queue.peek();
+                if (parent.nodeId == node.parentId) {
+                    parent.next.add(node);
+                    childQueue.offer(node);
+                    queue.poll();
+                    i++;
+                    if (i % Commons.LIMIT_SIZE_MAX == 0) {
+                        System.out.println(i + " nodes have been restored.");
+                    }
+
+                    if (queue.size() <= Commons.LIMIT_SIZE_MIN) {
+                        while ((line = br.readLine()) != null) {
+                            queue.offer(TrieNode.toTrieNode(line));
+                            if (queue.size() >= Commons.LIMIT_SIZE_MAX) {
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    if (parentQueue.isEmpty()) {
+                        while (!childQueue.isEmpty()) {
+                            parentQueue.offer(childQueue.poll());
+                        }
+                    }
+                    parent = parentQueue.poll();
+                }
+            }
+            br.close();
+//            file.delete();
+            System.out.println("all nodes have been restored. nodes count: " + i);
+            this.root = root;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//    private static void uncompress(String snappy, String source) throws IOException {
+//        File file = new File(source);
+//        if (!file.exists()) {
+//            file.createNewFile();
+//        }
+//        String str = new String(Snappy.uncompress(FileOperate.toByteArray(snappy)));
+//        FileWriter fw = new FileWriter(source);
+//        fw.write(str);
+//        fw.close();
+//    }
+//
+//    private static void compress(String snappy, String source) throws IOException {
+//        File file = new File(snappy);
+//        if (!file.exists()) {
+//            file.createNewFile();
+//        }
+//        FileOutputStream fos = new FileOutputStream(snappy);
+//        fos.write(Snappy.compress(FileOperate.readToString(source)));
+//        fos.close();
+//    }
 }
